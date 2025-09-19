@@ -1,0 +1,17 @@
+# R files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Large data files
+*.rds
+Results/*.rds
+Data/processed/*.rds
+
+# Temporary files
+*~
+*.tmp
+
+# Mac files
+.DS_Store

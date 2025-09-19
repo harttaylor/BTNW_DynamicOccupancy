@@ -1,0 +1,83 @@
+model{
+
+  # Priors 
+  # Psi 
+  for(i in 1:nbeta.psi){
+    beta.psi[i] ~ dnorm(0, 0.01)
+  }
+  
+  # Phi
+  for(i in 1:nbeta.phi){
+    beta.phi[i] ~ dnorm(0, 0.01)
+  }
+  
+  # Gamma 
+  for(i in 1:nbeta.gamma){ 
+    beta.gamma[i] ~ dnorm(0, 0.01)
+  }
+
+  # P 
+  for(i in 1:nbeta.p){
+    beta.p[i] ~ dnorm(0, 0.01)  # Detection 
+  }
+
+  # Ecological sub-model 
+  for(i in 1:nsite){
+    lpsi[i] <- inprod(beta.psi, x.psi[i, ])
+    muZ[i, 1] <- exp(lpsi[i])/(1 + exp(lpsi[i]))
+    z[i, 1] ~ dbern(muZ[i, 1])
+    
+    for(k in 2:nyear){
+      logit(phi[i, k - 1]) <- inprod(beta.phi, x.phi[i, k, ]) 
+      logit(gamma[i, k - 1]) <- inprod(beta.gamma, x.gamma[i, k, ]) 
+      
+      muZ[i, k] <- z[i, k - 1] * phi[i, k - 1] + (1 - z[i, k - 1]) * gamma[i, k - 1] 
+      z[i, k] ~ dbern(muZ[i, k])
+  
+# Calculate turnover (tau)
+      tau[i, k] <- (gamma[i, k - 1] * (1 - muZ[i, k - 1]))/(gamma[i, k - 1] * (1 - muZ[i, k - 1]) + (1 - phi[i, k - 1]) * muZ[i, k - 1])
+    }
+
+  }
+
+  
+# Detection sub-model
+  for(i in 1:nsite){
+    for(k in 1:nyear){
+      for(j in 1:J[i, k]){
+        logit(p[i, k, j]) <- inprod(beta.p, x.p[i, k, nsurv[i, k, j], ])
+        muy[i, k, j] <- z[i, k] * p[i, k, j]
+        y[i, k, nsurv[i, k, j]] ~ dbern(muy[i, k, j])
+      }
+    }
+  }  
+
+# Calculate the model likelihood (note change in order of indexing
+  for(k in 2:nyear){
+    for(i in 1:nsite){
+     for(j in 1:J[i, k]){
+	   # The model estimated probability of seeing the result you saw, given the site was occupied
+	   prob1[i, k, j] <- pow(p[i, k, j], y[i, k, nsurv[i, k, j]])*pow((1-p[i, k, j]),(1-y[i, k, nsurv[i, k, j]]))
+	   # The model predicted probability of not detecting the species, given the site was occupied
+       prob2[i, k, j] <- 1-p[i, k, j]
+	 }
+	 # If species was detected at site, the model predicted probability of occupancy*the probabiltiy of getting the detection history; otherwise 0
+	 term1[i, k] <- ind[i, k]*muZ[i, k]*prod(prob1[i, k, 1:J[i, k]])
+	 # If species was never detected, the model predicted probability the site was not occupied + the probability of getting an all-zero detection history given the site was occupied; otherwise 0
+	 term2[i, k] <- (1 - ind[i, k])*((1 - muZ[i, k]) + muZ[i, k]*prod(prob2[i, k, 1:J[i, k]]))
+	 
+	 # Get the log likelihood of the data at site i in year k, given the model predicted probabilties 
+	 y.prob[i, k] <- term1[i, k] + term2[i, k]
+	 lprob.y[i, k] <- log(y.prob[i, k])
+    }
+	# Sum the log likelihoods across all sites in year k (the likelihood score for year k)
+    score.year[k] <- sum(lprob.y[1:nsite, k])
+  }
+  #Sum across likelihood scores across years and multiply by -2 (the likelihood score; AKA the Deviance)
+  l.score <- -2*sum(score.year[2:nyear])
+
+  # Derived variables
+  for(k in 1:nyear) {
+    N[k] <- sum(z[,k]) # no. sites occupied for each year
+  }
+}

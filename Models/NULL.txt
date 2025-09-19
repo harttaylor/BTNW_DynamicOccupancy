@@ -1,0 +1,78 @@
+model{
+  # Priors 
+  psi ~ dunif(0, 1)  # Initial occupancy probability
+  for(i in 1:(nyear - 1)){
+    phi[i] ~ dunif(0, 1)  # Survival (phi) 
+    gamma[i] ~ dunif(0, 1)  # Colonization (gamma) 
+  }
+  p ~ dunif(0, 1)  # Detection  
+  
+  # Ecological sub-model 
+  for(i in 1:nsite){
+    z[i, 1] ~ dbern(psi)
+    
+    for(k in 2:nyear){
+      muZ[i, k] <- z[i, k - 1]*phi[k - 1] + (1 - z[i, k - 1])*gamma[k - 1] 
+      z[i, k] ~ dbern(muZ[i, k])
+    }
+  }
+  
+  # Detection sub-model
+  for(i in 1:nsite){
+    for(k in 1:nyear){
+     for(j in 1:J[i, k]){
+       muy[i, k, j]  <- z[i, k]*p
+       y[i, k, nsurv[i, k, j]] ~ dbern(muy[i, k, j])
+     }
+    }
+  }
+  
+  # Calculate the model likelihood (note change in order of indexing
+  for(k in 2:nyear){
+    for(i in 1:nsite){
+     for(j in 1:J[i, k]){
+       # The model estimated probability of seeing the result you saw, given the site was occupied
+       prob1[i, k, j] <- pow(p, y[i, k, nsurv[i, k, j]])*pow((1-p),(1-y[i, k, nsurv[i, k, j]]))
+       # The model predicted probability of not detecting the species, given the site was occupied
+       prob2[i, k, j] <- 1-p
+     }
+     # If species was detected at site, the model predicted probability of occupancy*the probabiltiy of getting the detection history; otherwise 0
+     term1[i, k] <- ind[i, k]*muZ[i, k]*prod(prob1[i, k, 1:J[i, k]])
+     # If species was never detected, the model predicted probability the site was not occupied + the probability of getting an all-zero detection history given the site was occupied; otherwise 0
+     term2[i, k] <- (1 - ind[i, k])*((1 - muZ[i, k]) + muZ[i, k]*prod(prob2[i, k, 1:J[i, k]]))
+     
+     # Get the log likelihood of the data at site i in year k, given the model predicted probabilties 
+     y.prob[i, k] <- term1[i, k] + term2[i, k]
+     lprob.y[i, k] <- log(y.prob[i, k])
+    }
+    # Sum the log likelihoods across all sites in year k (the likelihood score for year k)
+    score.year[k] <- sum(lprob.y[1:nsite, k])
+  }
+  #Sum across likelihood scores across years and multiply by -2 (the likelihood score; AKA the Deviance)
+  l.score <- -2*sum(score.year[2:nyear])
+  
+  # Derived parameters
+  psi1[1] <- psi
+  n.occ[1] <- sum(z[1:nsite, 1])
+  for (k in 2:nyear){
+    psi1[k] <- psi1[k - 1]*phi[k - 1] + (1 - psi1[k - 1])*gamma[k - 1]
+    n.occ[k] <- sum(z[1:nsite,k])
+    growthr[k] <- psi1[k]/psi1[k - 1]
+    turnover[k - 1] <- (1 - psi1[k - 1])*gamma[k - 1]/psi1[k]
+  }
+  
+  # Derived variables
+  for(k in 1:nyear) {
+    N[k] <- sum(z[,k]) # no. sites occupied for each year
+  }
+}
+
+
+
+
+
+
+
+
+
+
