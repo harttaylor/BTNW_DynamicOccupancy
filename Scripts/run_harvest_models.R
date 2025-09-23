@@ -86,7 +86,7 @@ system.time({
 
 print(harvest_dist_model)
 saveRDS(harvest_dist_model, "Results/harvest_01_distance_model.rds")
-harvest_dist_model <- readRDS("Results/harvest_01_distance_model.rds")
+
 # ===============================================================================
 # 3. MODEL 2: HARVEST AGE ONLY
 # ===============================================================================
@@ -176,7 +176,6 @@ system.time({
 
 print(harvest_main_model)
 saveRDS(harvest_main_model, "Results/harvest_03_main_model.rds")
-additive_harvest_model <- readRDS("Results/harvest_03_main_model.rds")
 
 # ===============================================================================
 # 5. MODEL 4: HARVEST INTERACTION (DISTANCE × AGE)
@@ -374,5 +373,6 @@ posterior_predictive_annual_occupancy <- function(model, model_name) {
 }
 
 # Run for the best harvest model
-harvest_interact_ppc <- posterior_predictive_annual_occupancy(harvest_interact_model, "Harvest Interaction")
+harvest_age_ppc <- posterior_predictive_annual_occupancy(harvest_age_model, "Harvest Age")
+harvest_dist_ppc <- posterior_predictive_annual_occupancy(harvest_dist_model, "Harvest Distance")
  
