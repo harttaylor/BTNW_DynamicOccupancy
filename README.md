@@ -32,13 +32,14 @@ install.packages(c("jagsUI", "loo", "dplyr", "ggplot2", "ROCR", "ape"))
   - Site-patch assignments for random effects
   - Survey metadata (Julian day, time of day)
   - All arrays properly aligned and ready for JAGS models
+- `distance_model_arrays.rds`: Distance-to-edge covariate arrays for all disturbance types, created by separate preprocessing script
 - `model_data_submodel.rds`: Enhanced data object including harvest-specific covariates created by prepare_harvest_data.R
 
 ### Supporting Data (Data/)
 - thinnedpoints.csv: Site coordinates (longitude, latitude) for spatial diagnostics
 - raw_yearly_covs.csv: Annual covariate data for harvest model preparation
 
-## Model Files (Models/)
+### Model Files (Models/)
 
 1. **NULL.txt**: Baseline model with no covariates
 2. **DistEdge.txt**: Distance-to-edge effects model  
@@ -71,8 +72,9 @@ Run `run_harvest_models.R` to:
 
 **Requires:** `model_data_submodel.rds` from Step 2
 
-### 4. Model Diagnostics (Optional)
+### 4. Model Diagnostics and Comparison (Optional)
 Run `model_diagnostics.R` to:
+- Calculate WAIC for model comparison
 - Perform Bayesian posterior predictive checks
 - Assess spatial autocorrelation (Moran's I)
 - Generate diagnostic plots and summary tables
@@ -97,7 +99,8 @@ Run `model_diagnostics.R` to:
 
 1. **JAGS installation:** Ensure JAGS is properly installed and accessible to R
 2. **Results directory:** Will be created automatically by scripts if it doesn't exist
-4. **Runtime:** Each model takes 10-80 minutes depending on system specifications
+3. **Runtime:** Each model takes 10-80 minutes depending on system specifications
+4. **Model validation:** The diagnostics script provides all WAIC comparisons, spatial autocorrelation checks, and Bayesian p-values for both distance-to-edge and harvest models
 
 ## GitHub Repository
 
@@ -106,7 +109,7 @@ https://github.com/harttaylor/BTNW_DynamicOccupancy.git
 
 ## Citation
 
-Data: [This Dryad repository DOI]
+Data: https://doi.org/10.5061/dryad.95x69p8z6
 Manuscript: [Journal citation]
 
 ## Contact
