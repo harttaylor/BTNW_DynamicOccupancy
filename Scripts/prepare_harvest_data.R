@@ -9,7 +9,7 @@ library(dplyr)
 
 # Load model data
 model_data <- readRDS("Data/model_data.rds")
-yearly_covariates <- read.csv("Data/raw_yearly_covs.csv") 
+yearly_covariates <- read.csv("Data/harvest_yearly_covs.csv") 
 yearly_covariates <- yearly_covariates %>% filter(SS %in% model_data$sites)
 
 # ===============================================================================
